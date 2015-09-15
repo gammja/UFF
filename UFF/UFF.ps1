@@ -1,17 +1,18 @@
-﻿$path = "C:\Users\sp\Source\Repos\ChangeTracking\Source"
-
-function IsIncluded($name)
+﻿function IsIncluded($name)
 {
-  $exclude = "*\obj*", "*\bin*", "*\Properties", ".vs", "*\packages*"
+  $exclude = "*\obj\Debug*", "*\bin\Debug*", "*\Properties"
   $mathes = $exclude | Where-Object {$name -like $_}
   $mathes.Count -eq 0
 }
 
-$ns = @{msb = 'http://schemas.microsoft.com/developer/msbuild/2003'}
-Get-ChildItem $path -File -Include *.sln -Recurse `
-  | Select-Xml '/Project/ItemGroup[2]//Compile[18]@Include' -Namespace $ns
+$path = "C:\Users\sp\Source\Repos\ChangeTracking\Source"
 
-#Get-ChildItem $path -File -Include *.cs, *.sln -Recurse `
-# | Where-Object {IsIncluded $_.FullName} `
-# | Format-Wide -Property Name -Column 1
- #Select-Xml
+$ns = @{'e' = 'http://schemas.microsoft.com/developer/msbuild/2003'}
+$used = Get-ChildItem $path -File -Include *.csproj -Recurse `
+		 | Select-Xml '//e:Compile/@Include' -Namespace $ns `
+		 | ForEach-Object {$_.Node.'#text' } `
+		 | Split-Path -Leaf
+
+Get-ChildItem $path -File -Include *.cs -Recurse -Exclude $used  `
+ | Where-Object {IsIncluded $_.FullName} `
+ | Format-Wide -Property FullName -Column 1
